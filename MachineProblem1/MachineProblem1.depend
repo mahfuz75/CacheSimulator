@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1581426601 source:e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\main.cpp
+	<iostream>
+	"Cache.h"
+
+1581426932 e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\include\cache.h
+
+1581426969 source:e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\src\cache.cpp
+	<string>
+	"Cache.h"
+
