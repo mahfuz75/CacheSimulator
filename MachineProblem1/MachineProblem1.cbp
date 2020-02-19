@@ -11,8 +11,10 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters="16 1024 2 0 0 0 0 gcc_trace.txt" />
 				<Compiler>
 					<Add option="-g" />
+					<Add directory="include" />
 				</Compiler>
 			</Target>
 			<Target title="Release">
@@ -22,6 +24,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -32,10 +35,17 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="include/Block.h" />
+		<Unit filename="include/Cache.h" />
+		<Unit filename="include/Set.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="src/Block.cpp" />
+		<Unit filename="src/Cache.cpp" />
+		<Unit filename="src/Set.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />
+			<envvars />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
