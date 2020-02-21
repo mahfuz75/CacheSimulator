@@ -1,8 +1,9 @@
 #include "Set.h"
 
-Set::Set()
+Set::Set(int assoc)
 {
     //ctor
+    ResetBlocks(assoc);
 }
 
 Set::~Set()

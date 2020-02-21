@@ -8,6 +8,12 @@ class Block
         Block();
         virtual ~Block();
 
+        void ResetBlock(){
+            TAG = 0;
+            DIRTY = 0;
+            VALID = 0;
+        }
+
     protected:
 
     private:

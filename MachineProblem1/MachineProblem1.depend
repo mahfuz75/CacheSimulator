@@ -13,3 +13,33 @@
 	<string>
 	"Cache.h"
 
+1582241148 source:/media/mahfuz/DATA/Study/CDA5106_Spring/MachineProblem1Solution/MachineProblem1/main.cpp
+	<iostream>
+	<fstream>
+	<sstream>
+	<vector>
+	<iterator>
+	<cmath>
+	"Cache.h"
+
+1582241909 /media/mahfuz/DATA/Study/CDA5106_Spring/MachineProblem1Solution/MachineProblem1/include/Cache.h
+	<cmath>
+	<cstdlib>
+	"Set.h"
+
+1582240997 source:/media/mahfuz/DATA/Study/CDA5106_Spring/MachineProblem1Solution/MachineProblem1/src/Cache.cpp
+	<string>
+	"Cache.h"
+
+1582241669 source:/media/mahfuz/DATA/Study/CDA5106_Spring/MachineProblem1Solution/MachineProblem1/src/Block.cpp
+	"Block.h"
+
+1582241708 /media/mahfuz/DATA/Study/CDA5106_Spring/MachineProblem1Solution/MachineProblem1/include/Block.h
+
+1582241417 source:/media/mahfuz/DATA/Study/CDA5106_Spring/MachineProblem1Solution/MachineProblem1/src/Set.cpp
+	"Set.h"
+
+1582241884 /media/mahfuz/DATA/Study/CDA5106_Spring/MachineProblem1Solution/MachineProblem1/include/Set.h
+	<cstdlib>
+	"Block.h"
+

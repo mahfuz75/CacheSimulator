@@ -11,6 +11,7 @@ using namespace std;
 //#define OUTPUT_FILE "output.txt"
 #define DEBUG_FILE "debug.txt"
 
+
 bool DEBUG = true;
 
 string dec2hex(int dec);
@@ -135,7 +136,7 @@ int main(int argc, char **argv)
     char *TRACE_FILE = argv[8];
 
     Cache L1Cache(1, iL1_SIZE, iL1_ASSOC, iBLOCKSIZE, (ReplacementPolicies)iREPLACEMENT_POLICY, (InclusionProperty)iINCLUSION_PROPERTY);
-    Cache L2Cache(2, iL2_SIZE, iL2_ASSOC, iBLOCKSIZE, (ReplacementPolicies)iREPLACEMENT_POLICY, (InclusionProperty)iINCLUSION_PROPERTY);
+    //Cache L2Cache(2, iL2_SIZE, iL2_ASSOC, iBLOCKSIZE, (ReplacementPolicies)iREPLACEMENT_POLICY, (InclusionProperty)iINCLUSION_PROPERTY);
 
     ifstream iFILE;
     ofstream dFILE;//, oFILE;

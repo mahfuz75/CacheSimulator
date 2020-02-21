@@ -3,6 +3,7 @@
 Block::Block()
 {
     //ctor
+    ResetBlock();
 }
 
 Block::~Block()
