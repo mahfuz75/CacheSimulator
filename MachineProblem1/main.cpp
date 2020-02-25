@@ -1,4 +1,6 @@
 #include <iostream>
+#include <iomanip>
+#include <cstdio>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -11,11 +13,21 @@ using namespace std;
 //#define OUTPUT_FILE "output.txt"
 #define DEBUG_FILE "debug.txt"
 
-
 bool DEBUG = true;
 
-string dec2hex(int dec);
-int hex2dec(string hex);
+string dec2hex(unsigned int dec);
+unsigned int hex2dec(string hex);
+void Read(Cache Caches[], int level, int total_level, unsigned int address, Block block, unsigned int rank_val);
+void Write(Cache caches[], int level, int total_level, unsigned int address, unsigned int rank_val, bool dirty_bit_val);
+int Search(Cache caches[], int level, int total_level, unsigned int tag, unsigned int index);
+int Evict(Cache caches[], int level, int total_level, unsigned int index);
+void Replace(Cache cachesp[], int level, int total_level, unsigned int index, int way, Block block);
+void UpdateRankArray(Cache caches[], int level, int total_level, unsigned int index, int way, int result, unsigned int rank_val);
+unsigned int GetAddress(Cache caches[], int level, int total_level, unsigned int tag, unsigned int index);
+int GetWayToPlaceOrReplace(Cache caches[], int level, int total_level, unsigned int index);
+void print_contents(Cache caches[], int total_level);
+void print_results(Cache caches[], int total_level);
+void Invalidate(Cache caches[], int level, int total_level, unsigned int address);
 /*enum ReplacementPolicies {
     LRU,
     FIFO,
@@ -29,10 +41,10 @@ void show_help(string filename)
 {
     cout << "Usage: " << filename << " <BLOCKSIZE> <L1_SIZE> <L1_ASSOC> <L2_SIZE> <L2_ASSOC> <REPLACEMENT_POLICY> <INCLUSION_PROPERTY> <trace_file>" << endl;
 }
-int string2int(string s)
+unsigned int string2int(string s)
 {
-    int len = s.size();
-    int res = 0;
+    unsigned int len = s.size();
+    unsigned int res = 0;
     bool is_valid = true;
     for(int i=0;i<len;i++)
     {
@@ -50,13 +62,13 @@ bool validate_parameters(string BLOCKSIZE, string L1_SIZE, string L1_ASSOC, stri
 {
     bool is_valid = true;
 
-    int iBLOCKSIZE = string2int(BLOCKSIZE);
-    int iL1_SIZE = string2int(L1_SIZE);
-    int iL1_ASSOC = string2int(L1_ASSOC);
-    int iL2_SIZE = string2int(L2_SIZE);
-    int iL2_ASSOC = string2int(L2_ASSOC);
-    int iREPLACEMENT_POLICY = string2int(REPLACEMENT_POLICY);
-    int iINCLUSION_PROPERTY = string2int(INCLUSION_PROPERTY);
+    unsigned int iBLOCKSIZE = string2int(BLOCKSIZE);
+    unsigned int iL1_SIZE = string2int(L1_SIZE);
+    unsigned int iL1_ASSOC = string2int(L1_ASSOC);
+    unsigned int iL2_SIZE = string2int(L2_SIZE);
+    unsigned int iL2_ASSOC = string2int(L2_ASSOC);
+    unsigned int iREPLACEMENT_POLICY = string2int(REPLACEMENT_POLICY);
+    unsigned int iINCLUSION_PROPERTY = string2int(INCLUSION_PROPERTY);
 
     if(iBLOCKSIZE <= 0)
     {
@@ -111,6 +123,9 @@ bool validate_parameters(string BLOCKSIZE, string L1_SIZE, string L1_ASSOC, stri
     return is_valid;
 }
 
+ifstream iFILE;
+ofstream dFILE;//, oFILE;
+
 int main(int argc, char **argv)
 {
     if(argc != 9)
@@ -124,23 +139,33 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    int iBLOCKSIZE = string2int(argv[1]);
-    int iL1_SIZE = string2int(argv[2]);
-    int iL1_ASSOC = string2int(argv[3]);
-    int iL2_SIZE = string2int(argv[4]);
-    int iL2_ASSOC = string2int(argv[5]);
-    int iREPLACEMENT_POLICY = string2int(argv[6]);
+    unsigned int iBLOCKSIZE = string2int(argv[1]);
+    unsigned int iL1_SIZE = string2int(argv[2]);
+    unsigned int iL1_ASSOC = string2int(argv[3]);
+    unsigned int iL2_SIZE = string2int(argv[4]);
+    unsigned int iL2_ASSOC = string2int(argv[5]);
+    unsigned int iREPLACEMENT_POLICY = string2int(argv[6]);
     string sREPLACEMENT_POLICY = (iREPLACEMENT_POLICY == 0 ? "LRU" : (iREPLACEMENT_POLICY == 1 ? "FIFO" : "Optimal"));
-    int iINCLUSION_PROPERTY = string2int(argv[7]);
+    unsigned int iINCLUSION_PROPERTY = string2int(argv[7]);
     string sINCLUSION_PROPERTY = (iINCLUSION_PROPERTY == 0 ? "non-inclusive" : "inclusive");
     char *TRACE_FILE = argv[8];
+    int number_of_cache_levels = (iL2_SIZE == 0 ? 1 : 2);
 
-    Cache L1Cache(1, iL1_SIZE, iL1_ASSOC, iBLOCKSIZE, (ReplacementPolicies)iREPLACEMENT_POLICY, (InclusionProperty)iINCLUSION_PROPERTY);
-    //Cache L2Cache(2, iL2_SIZE, iL2_ASSOC, iBLOCKSIZE, (ReplacementPolicies)iREPLACEMENT_POLICY, (InclusionProperty)iINCLUSION_PROPERTY);
+    Cache *Caches;
+    Caches = (Cache *)malloc(sizeof(Cache) * 2);
+    Caches[0] = Cache(1, iL1_SIZE, iL1_ASSOC, iBLOCKSIZE, iREPLACEMENT_POLICY, iINCLUSION_PROPERTY);
+    Caches[1] = Cache(2, iL2_SIZE, iL2_ASSOC, iBLOCKSIZE, iREPLACEMENT_POLICY, iINCLUSION_PROPERTY);
 
-    ifstream iFILE;
-    ofstream dFILE;//, oFILE;
+    //Cache L1Cache(1, iL1_SIZE, iL1_ASSOC, iBLOCKSIZE, iREPLACEMENT_POLICY, iINCLUSION_PROPERTY);
+    //Cache L2Cache(2, iL2_SIZE, iL2_ASSOC, iBLOCKSIZE, iREPLACEMENT_POLICY, iINCLUSION_PROPERTY);
+
+    if(iREPLACEMENT_POLICY == Optimal){
+        //Initialize rank by reading trace file
+    }
+
+
     string instruction, hex_address;
+    unsigned int iAddress;
 
     iFILE.open(TRACE_FILE);
     //oFILE.open(OUTPUT_FILE);
@@ -181,52 +206,59 @@ int main(int argc, char **argv)
 
     if (iFILE.is_open())
     {
-        //string input_line;
-        int count = 1;
+        unsigned int trc_count = 1;
+        //unsigned int rank_val = (L1Cache.REPLACEMENT_POLICY == Optimal) ? OPTIMAL_TRACE[trace_count - 1] : trace_count;
+        unsigned int rank_val = trc_count;
         while(!iFILE.eof())
         //while(true)
         {
+            //unsigned int tag, index, way, rank_val;
+            //unsigned int tag, index, way, rank_val;
             instruction = "";
             hex_address = "";
+
             iFILE >> instruction >> hex_address;
+            iAddress = hex2dec(hex_address);
+
             if(instruction.size() == 0)
                 break;
             if(DEBUG){
                 dFILE << "----------------------------------------" << endl;
-                dFILE << "# " << count << " : ";
+                dFILE << "# " << trc_count << " : ";
             }
             if(instruction == "r")
             {
-                if(DEBUG){
-                    dFILE << "read " << hex_address << endl;
-                }
-                //Read()
-                cout << "read instruction " << endl;
+                Read(Caches, 1, number_of_cache_levels, iAddress, Block(), rank_val);
+
+                //cout << "read instruction " << endl;
             }
             else if(instruction == "w")
             {
-                if(DEBUG){
+                Write(Caches, 1, number_of_cache_levels, iAddress, rank_val, DIRTY);
+                /*if(DEBUG){
                     dFILE << "write " << hex_address << endl;
-                }
-                cout << "write instruction " << endl;
+                }*/
+                //cout << "write instruction " << endl;
             }
             else
             {
                 cout << "other instruction " << endl;
             }
             //cout << instruction << " " << hex_address << endl;
-            count++;
-            if(count == 10)
-                break;
+            trc_count++;
+//            if(trc_count == 10)
+//                break;
         }
-        //cout << count << endl;
+        //cout << trc_count << endl;
     }
+    print_contents(Caches, number_of_cache_levels);
+    print_results(Caches, number_of_cache_levels);
     iFILE.close();
     //oFILE.close();
     dFILE.close();
 /*
     string input_line, instruction, hex_address;
-    int hex_address_int;
+    unsigned int hex_address_int;
 
     while(getline(cin, input_line))
     {
@@ -243,17 +275,297 @@ int main(int argc, char **argv)
     return 0;
 }
 
-string dec2hex(int dec){
+string dec2hex(unsigned int dec){
     stringstream ss;
     ss << hex << dec;
     return ss.str();
 }
 
-int hex2dec(string hex){
-    int dec;
+unsigned int hex2dec(string hex){
+    unsigned int dec;
     hex = "0x" + hex;
     stringstream ss;
     ss << std::hex << hex;
     ss >> dec;
     return dec;
+}
+
+void Write(Cache caches[], int level, int total_level, unsigned int address, unsigned int rank_val, bool dirty_bit_val){
+    if(level > total_level){
+        caches[total_level - 1].BLOCK_TRANSFERS++;
+//        block.DIRTY_BIT = CLEAN;
+//        block.VALID_BIT = VALID;
+        return;
+    }
+    caches[level - 1].ACCESSES++;
+    caches[level - 1].WRITES++;
+
+    rank_val = caches[level - 1].ACCESSES;
+
+    unsigned int tag = caches[level - 1].GetTagBits(address);
+    unsigned int index = caches[level - 1].GetIndexBits(address);
+
+    dFILE << "write " << dec2hex(address) << endl;
+    dFILE << "L" << level << " write : " << dec2hex((address >> caches[level-1].BLOCK_OFFSET_BIT_WIDTH) << caches[level-1].BLOCK_OFFSET_BIT_WIDTH) << " (tag " << dec2hex(tag) << ", index " << index << ")" << endl;
+
+    int way = Search(caches, level, total_level, tag, index);
+    int search_result = -1;
+
+    if(way > -1){
+        //hit
+        dFILE << "L" << level << " hit" << endl;
+
+        search_result = HIT;
+        caches[level-1].SETS[index].BLOCKS[way].DIRTY_BIT = dirty_bit_val;
+
+        UpdateRankArray(caches, level, total_level, index, way, search_result, rank_val);
+        dFILE << "L" << level << " update " << (caches[level-1].REPLACEMENT_POLICY == 0 ? "LRU" : caches[level-1].REPLACEMENT_POLICY == 1 ? "FIFO" : caches[level-1].REPLACEMENT_POLICY == 2 ? "Optimal" : "") << endl;
+    }
+    else{
+        //miss
+        dFILE << "L" << level << " miss" << endl;
+
+        search_result = MISS;
+        caches[level - 1].WRITE_MISSES++;
+        way = Evict(caches, level, total_level, index);
+        if(caches[level-1].SETS[index].BLOCKS[way].VALID_BIT == VALID){
+            unsigned int victim_address = GetAddress(caches, level, total_level, caches[level-1].SETS[index].BLOCKS[way].TAG, index);
+            dFILE << "L" << level << " victim: " << dec2hex(victim_address) << " (tag " << dec2hex(caches[level-1].SETS[index].BLOCKS[way].TAG) << ", index " << index << ", " << (caches[level-1].SETS[index].BLOCKS[way].DIRTY_BIT == DIRTY ? "dirty" : "clean") << ")" <<endl;
+        }
+        else{
+            dFILE << "L" << level << " victim: none" <<endl;
+        }
+
+
+        Block block = Block();
+        Read(caches, level+1, total_level, address, block, rank_val);
+
+        block.TAG = tag;
+        Replace(caches, level, total_level, index, way, block);
+
+        caches[level-1].SETS[index].BLOCKS[way].DIRTY_BIT = dirty_bit_val;
+        UpdateRankArray(caches, level, total_level, index, way, search_result, rank_val);
+
+        dFILE << "L" << level << " update " << (caches[level-1].REPLACEMENT_POLICY == 0 ? "LRU" : caches[level-1].REPLACEMENT_POLICY == 1 ? "FIFO" : caches[level-1].REPLACEMENT_POLICY == 2 ? "Optimal" : "") << endl;
+        dFILE << "L" << level << " set " << (dirty_bit_val == DIRTY ? "dirty" : "clean") << endl;
+    }
+}
+
+void Read(Cache caches[], int level, int total_level, unsigned int address, Block block, unsigned int rank_val){
+    if(level > total_level){
+        caches[total_level - 1].BLOCK_TRANSFERS++;
+        block.DIRTY_BIT = CLEAN;
+        block.VALID_BIT = VALID;
+        return;
+    }
+
+    caches[level - 1].ACCESSES++;
+    caches[level - 1].READS++;
+
+    rank_val = caches[level - 1].ACCESSES;
+
+    unsigned int tag = caches[level - 1].GetTagBits(address);
+    unsigned int index = caches[level - 1].GetIndexBits(address);
+
+    dFILE << "read " << dec2hex(address) << endl;
+    dFILE << "L" << level << " read : " << dec2hex((address >> caches[level-1].BLOCK_OFFSET_BIT_WIDTH) << caches[level-1].BLOCK_OFFSET_BIT_WIDTH) << " (tag " << dec2hex(tag) << ", index " << index << ")" << endl;
+
+    int way = Search(caches, level, total_level, tag, index);
+    int search_result = -1;
+    if(way > -1){
+        //hit
+        dFILE << "L" << level << " hit" << endl;
+
+        search_result = HIT;
+        block = caches[level-1].SETS[index].BLOCKS[way];
+
+//        if(level > 1){
+//            caches[level - 1].SETS[index].BLOCKS[way].VALID_BIT = INVALID;
+//        }
+        if (level > 1 && caches[level - 1 - 1].INCLUSION_PROPERTY == exclusive)
+                {
+                    caches[level - 1].SETS[index].BLOCKS[way].VALID_BIT = INVALID;
+        #ifdef DBG
+                    fprintf(debug_fp, "Invalidation %llx : Cache L%u Set %llu, Way %u\n\n", ADDR, level + 1, index, way_num);
+        #endif
+                    //return way_num;
+                }
+        block.DIRTY_BIT = CLEAN;
+
+
+
+        UpdateRankArray(caches, level, total_level, index, way, search_result, rank_val);
+        dFILE << "L1 update " << (caches[level-1].REPLACEMENT_POLICY == 0 ? "LRU" : caches[level-1].REPLACEMENT_POLICY == 1 ? "FIFO" : caches[level-1].REPLACEMENT_POLICY == 2 ? "Optimal" : "") << endl;
+    }
+    else{
+        //miss
+        dFILE << "L" << level << " miss" << endl;
+
+        search_result = MISS;
+        caches[level - 1].READ_MISSES++;
+        if (level == 1 || caches[level - 1 - 1].INCLUSION_PROPERTY != exclusive){
+            way = Evict(caches, level, total_level, index);
+            if(caches[level-1].SETS[index].BLOCKS[way].VALID_BIT == VALID){
+                unsigned int victim_address = GetAddress(caches, level, total_level, caches[level-1].SETS[index].BLOCKS[way].TAG, index);
+                dFILE << "L" << level << " victim: " << dec2hex(victim_address) << " (tag " << dec2hex(caches[level-1].SETS[index].BLOCKS[way].TAG) << ", index " << index << ", " << (caches[level-1].SETS[index].BLOCKS[way].DIRTY_BIT == DIRTY ? "dirty" : "clean") << ")" <<endl;
+            }
+        }
+        else{
+            dFILE << "L" << level << " victim: none" <<endl;
+        }
+
+        Read(caches, level+1, total_level, address, block, rank_val);
+
+        block.TAG = tag;
+        if (level == 1 || caches[level - 1 - 1].INCLUSION_PROPERTY != exclusive){
+            Replace(caches, level, total_level, index, way, block);
+            UpdateRankArray(caches, level, total_level, index, way, search_result, rank_val);
+            dFILE << "L1 update " << (caches[level-1].REPLACEMENT_POLICY == 0 ? "LRU" : caches[level-1].REPLACEMENT_POLICY == 1 ? "FIFO" : caches[level-1].REPLACEMENT_POLICY == 2 ? "Optimal" : "") << endl;
+        }
+
+    }
+    //UpdateRankArray(caches, level, total_level, index, way, search_result, rank_val);
+//    dFILE << "L1 update " << (caches[level-1].REPLACEMENT_POLICY == 0 ? "LRU" : caches[level-1].REPLACEMENT_POLICY == 1 ? "FIFO" : caches[level-1].REPLACEMENT_POLICY == 2 ? "Optimal" : "") << endl;
+}
+
+int Search(Cache caches[], int level, int total_level, unsigned int tag, unsigned int index){
+    for(int i=0; i<caches[level-1].ASSOC; i++){
+        if(caches[level-1].SETS[index].BLOCKS[i].VALID_BIT == VALID && caches[level-1].SETS[index].BLOCKS[i].TAG == tag)
+            return i;
+    }
+    return -1;
+}
+
+int Evict(Cache caches[], int level, int total_level, unsigned int index){
+    int way = GetWayToPlaceOrReplace(caches, level, total_level, index);
+    if(caches[level-1].SETS[index].BLOCKS[way].VALID_BIT == VALID){
+        unsigned int address = GetAddress(caches, level, total_level, caches[level-1].SETS[index].BLOCKS[way].TAG, index);
+        if(caches[level-1].SETS[index].BLOCKS[way].DIRTY_BIT == DIRTY){
+            caches[level-1].WRITE_BACKS++;
+            Write(caches, level+1, total_level, address, caches[level-1].SETS[index].RANK_ARRAY[way], DIRTY);
+        }
+        else{
+            //
+            if (caches[level-1].INCLUSION_PROPERTY == exclusive)
+			{
+#ifdef DBG
+				fprintf(debug_fp, "Writeback %llx Clean: Cache L%u Set %llu, Way %u\n", ADDR, level + 1, index, way_num);
+#endif
+				Write(caches, level + 1, total_level, address, caches[level-1].SETS[index].RANK_ARRAY[way], CLEAN);
+			}
+        }
+        if(level > 1){
+            Invalidate(caches, level - 1, total_level, address);
+        }
+        //return -1;
+    }
+    return way;
+}
+int GetWayToPlaceOrReplace(Cache caches[], int level, int total_level, unsigned int index){
+    for(int i = 0; i < caches[level-1].ASSOC; i++){
+        if(caches[level-1].SETS[index].BLOCKS[i].VALID_BIT == INVALID)
+            return i;
+    }
+    int r = 0;
+    if(caches[level-1].REPLACEMENT_POLICY == Optimal){
+        for(int i = 0; i < caches[level-1].ASSOC; i++)
+            if(caches[level-1].SETS[index].RANK_ARRAY[i] > caches[level-1].SETS[index].RANK_ARRAY[r])
+                r = i;
+    }
+    else{   //For LRU and FIFO
+        for(int i = 0; i < caches[level-1].ASSOC; i++)
+            if(caches[level-1].SETS[index].RANK_ARRAY[i] < caches[level-1].SETS[index].RANK_ARRAY[r])
+                r = i;
+    }
+    return r;
+}
+unsigned int GetAddress(Cache caches[], int level, int total_level, unsigned int tag, unsigned int index) {
+    unsigned int address = 0;
+    address |= (tag << (caches[level-1].INDEX_BIT_WIDTH + caches[level-1].BLOCK_OFFSET_BIT_WIDTH));
+    address |= (index << caches[level-1].BLOCK_OFFSET_BIT_WIDTH);
+    return address;
+    //return (tag << (caches[level-1].INDEX_BIT_WIDTH + caches[level-1].BLOCK_OFFSET_BIT_WIDTH)) | (index << caches[level-1].BLOCK_OFFSET_BIT_WIDTH);
+}
+void Invalidate(Cache caches[], int level, int total_level, unsigned int address){
+    //
+    //uint32_t level_invalidation_signal_from = level + 1;
+    int level_from = level + 1;
+    while(level >= 1){
+        if(caches[level-1].INCLUSION_PROPERTY == inclusive){
+            unsigned int tag = caches[level - 1].GetTagBits(address);
+            unsigned int index = caches[level - 1].GetIndexBits(address);
+            int way = Search(caches, level, total_level, tag, index);
+            int search_result = -1;
+            if(way > -1){
+                search_result = HIT;
+                caches[level-1].SETS[index].BLOCKS[way].VALID_BIT = INVALID;
+                if(caches[level-1].SETS[index].BLOCKS[way].DIRTY_BIT == DIRTY)
+                    Write(caches, level_from, total_level, address, caches[level-1].SETS[index].RANK_ARRAY[way], DIRTY);
+            }
+            else{
+                search_result = MISS;
+            }
+            if (level == 1)
+				/* L1 is the highest level, reach L1 means we've already finished invalidation process*/
+				return;
+			else
+				/* if not reached L1, we need to go to higher level cache */
+				level--;
+        }
+        else{
+            return;
+        }
+    }
+}
+void Replace(Cache caches[], int level, int total_level, unsigned int index, int way, Block block){
+    caches[level - 1].SETS[index].BLOCKS[way].VALID_BIT = VALID;
+    caches[level - 1].SETS[index].BLOCKS[way].TAG = block.TAG;
+    caches[level - 1].SETS[index].BLOCKS[way].DIRTY_BIT = block.DIRTY_BIT;
+}
+void UpdateRankArray(Cache caches[], int level, int total_level, unsigned int index, int way, int result, unsigned int rank_val){
+    if(caches[level - 1].REPLACEMENT_POLICY == FIFO){
+        if(result == MISS){
+            caches[level-1].SETS[index].RANK_ARRAY[way] = rank_val;
+        }
+    }
+    else{
+        caches[level-1].SETS[index].RANK_ARRAY[way] = rank_val;
+    }
+}
+void print_contents(Cache caches[], int total_level){
+    for(int i=0; i<total_level; i++){
+        cout << "===== L" << (i+1) << " contents =====" << endl;
+        for(int j=0; j<caches[i].NUMBER_OF_SETS; j++){
+            cout << "Set     " << j << ":  ";
+            for(int k=0; k<caches[i].ASSOC; k++){
+                //unsigned int iaddress = GetAddress(caches, i+1, total_level, caches[i].SETS[j].BLOCKS[k].TAG, j);
+                cout << setw(10) << dec2hex(caches[i].SETS[j].BLOCKS[k].TAG);
+                //cout << "  " << dec2hex(iaddress);
+                if(caches[i].SETS[j].BLOCKS[k].DIRTY_BIT == DIRTY)
+                    cout << " D";
+                else
+                    cout << "  ";
+
+            }
+            cout << endl;
+        }
+    }
+}
+void print_results(Cache caches[], int total_level){
+    cout << "===== Simulation results (raw) =====" << endl;
+    char list_char = 'a';
+    for(int i=0; i<2; i++){
+        cout << (list_char++) << ". number of L" << (i+1) << " reads:        " << caches[i].READS << endl;
+        cout << (list_char++) << ". number of L" << (i+1) << " read misses:  " << caches[i].READ_MISSES << endl;
+        cout << (list_char++) << ". number of L" << (i+1) << " writes:       " << caches[i].WRITES << endl;
+        cout << (list_char++) << ". number of L" << (i+1) << " write misses: " << caches[i].WRITE_MISSES << endl;
+        if(total_level > i){
+            double miss_rate = (caches[i].READ_MISSES + caches[i].WRITE_MISSES)/(double)(caches[i].READS + caches[i].WRITES); //for L1
+            cout << (list_char++) << ". L" << (i+1) << " miss rate:              " << miss_rate << endl;
+        }
+        else
+            cout << (list_char++) << ". L" << (i+1) << " miss rate:              " << 0 << endl;
+        cout << (list_char++) << ". number of L" << (i+1) << " writebacks:   " << caches[i].WRITE_BACKS << endl;
+    }
+    cout << list_char++ << ". total memory traffic:      " << caches[total_level-1].BLOCK_TRANSFERS << endl;
 }

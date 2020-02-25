@@ -1,9 +1,10 @@
 #include "Set.h"
 
-Set::Set(int assoc)
+Set::Set(unsigned int assoc)
 {
     //ctor
     ResetBlocks(assoc);
+    ResetRankArray(assoc);
 }
 
 Set::~Set()

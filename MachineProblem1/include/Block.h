@@ -8,18 +8,20 @@ class Block
         Block();
         virtual ~Block();
 
+        unsigned int TAG;
+        bool DIRTY_BIT;
+        bool VALID_BIT;
+
         void ResetBlock(){
             TAG = 0;
-            DIRTY = 0;
-            VALID = 0;
+            DIRTY_BIT = 0;
+            VALID_BIT = 0;
         }
 
     protected:
 
     private:
-        int TAG;
-        char DIRTY;
-        char VALID;
+
 };
 
 #endif // BLOCK_H

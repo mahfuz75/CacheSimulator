@@ -1,15 +1,22 @@
 # depslib dependency file v1.0
-1581996475 source:e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\main.cpp
+1582638897 source:e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\main.cpp
 	<iostream>
+	<iomanip>
+	<cstdio>
+	<fstream>
 	<sstream>
 	<vector>
 	<iterator>
+	<cmath>
 	"Cache.h"
 
-1582118397 e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\include\cache.h
-	<vector>
+1582513732 e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\include\cache.h
+	<stdio.h>
+	<cmath>
+	<cstdlib>
+	"Set.h"
 
-1582117106 source:e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\src\cache.cpp
+1582447920 source:e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\src\cache.cpp
 	<string>
 	"Cache.h"
 
@@ -42,4 +49,17 @@
 1582241884 /media/mahfuz/DATA/Study/CDA5106_Spring/MachineProblem1Solution/MachineProblem1/include/Set.h
 	<cstdlib>
 	"Block.h"
+
+1582447874 e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\include\set.h
+	<cstdlib>
+	<cstring>
+	"Block.h"
+
+1582447736 e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\include\block.h
+
+1582386922 source:e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\src\block.cpp
+	"Block.h"
+
+1582447947 source:e:\mmr\cda5106_spring\codingassignment1\machineproblem1solution\machineproblem1\src\set.cpp
+	"Set.h"
 

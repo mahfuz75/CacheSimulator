@@ -2,7 +2,7 @@
 #include "Cache.h"
 
 
-Cache::Cache(int LEVEL=1, int SIZE=1024, int ASSOC=1, int BLOCKSIZE=4, ReplacementPolicies POLICY=LRU, InclusionProperty PROPERTY=non_inclusive)
+Cache::Cache(unsigned int LEVEL=1, unsigned int SIZE=1024, unsigned int ASSOC=1, unsigned int BLOCKSIZE=4, unsigned int POLICY=LRU, unsigned int PROPERTY=non_inclusive)
 {
     //ctor
     this->LEVEL = LEVEL;
