@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
+#include <string>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -10,10 +11,13 @@
 
 using namespace std;
 
-//#define OUTPUT_FILE "output.txt"
+#define OUTPUT_FILE "output.txt"
 #define DEBUG_FILE "debug.txt"
 
 bool DEBUG = true;
+
+ifstream iFILE;
+ofstream dFILE, oFILE;
 
 string dec2hex(unsigned int dec);
 unsigned int hex2dec(string hex);
@@ -25,18 +29,14 @@ void Replace(Cache cachesp[], int level, int total_level, unsigned int index, in
 void UpdateRankArray(Cache caches[], int level, int total_level, unsigned int index, int way, int result, unsigned int rank_val);
 unsigned int GetAddress(Cache caches[], int level, int total_level, unsigned int tag, unsigned int index);
 int GetWayToPlaceOrReplace(Cache caches[], int level, int total_level, unsigned int index);
-void print_contents(Cache caches[], int total_level);
-void print_results(Cache caches[], int total_level);
+//void print_contents(Cache caches[], int total_level);
+//void print_contents_to_file(Cache caches[], int total_level, ofstream &f);
+//void print_results(Cache caches[], int total_level);
+//void print_results_to_file(Cache caches[], int total_level, ofstream &f);
 void Invalidate(Cache caches[], int level, int total_level, unsigned int address);
-/*enum ReplacementPolicies {
-    LRU,
-    FIFO,
-    Optimal
-};
-enum InclusionProperty{
-    non_inclusive,
-    inclusive
-};*/
+string get_formatted_cache_contents(Cache caches[], int total_level);
+string get_formatted_raw_results(Cache caches[], int total_level);
+
 void show_help(string filename)
 {
     cout << "Usage: " << filename << " <BLOCKSIZE> <L1_SIZE> <L1_ASSOC> <L2_SIZE> <L2_ASSOC> <REPLACEMENT_POLICY> <INCLUSION_PROPERTY> <trace_file>" << endl;
@@ -123,9 +123,6 @@ bool validate_parameters(string BLOCKSIZE, string L1_SIZE, string L1_ASSOC, stri
     return is_valid;
 }
 
-ifstream iFILE;
-ofstream dFILE;//, oFILE;
-
 int main(int argc, char **argv)
 {
     if(argc != 9)
@@ -168,10 +165,10 @@ int main(int argc, char **argv)
     unsigned int iAddress;
 
     iFILE.open(TRACE_FILE);
-    //oFILE.open(OUTPUT_FILE);
+    oFILE.open(OUTPUT_FILE);
     dFILE.open(DEBUG_FILE);
 
-    /*oFILE << "===== Simulator configuration =====" << endl;
+    oFILE << "===== Simulator configuration =====" << endl;
     oFILE << "BLOCKSIZE:             " << iBLOCKSIZE << endl;
     oFILE << "L1_SIZE:               " << iL1_SIZE << endl;
     oFILE << "L1_ASSOC:              " << iL1_ASSOC << endl;
@@ -179,7 +176,7 @@ int main(int argc, char **argv)
     oFILE << "L2_ASSOC:              " << iL2_ASSOC << endl;
     oFILE << "REPLACEMENT POLICY:    " << sREPLACEMENT_POLICY << endl;
     oFILE << "INCLUSION PROPERTY:    " << sINCLUSION_PROPERTY<< endl;
-    oFILE << "trace_file:            " << TRACE_FILE << endl;*/
+    oFILE << "trace_file:            " << TRACE_FILE << endl;
 
     cout << "===== Simulator configuration =====" << endl;
     cout << "BLOCKSIZE:             " << iBLOCKSIZE << endl;
@@ -251,10 +248,26 @@ int main(int argc, char **argv)
         }
         //cout << trc_count << endl;
     }
-    print_contents(Caches, number_of_cache_levels);
-    print_results(Caches, number_of_cache_levels);
+    //print_contents_to_file(Caches, number_of_cache_levels, dFILE);
+    //print_results_to_file(Caches, number_of_cache_levels, dFILE);
+
+    //print_contents_to_file(Caches, number_of_cache_levels, oFILE);
+    //print_results_to_file(Caches, number_of_cache_levels, oFILE);
+
+    //print_contents(Caches, number_of_cache_levels);
+    //print_results(Caches, number_of_cache_levels);
+
+    string contents = get_formatted_cache_contents(Caches, number_of_cache_levels);
+    string results = get_formatted_raw_results(Caches, number_of_cache_levels);
+
+    cout << contents;
+    cout << results;
+    dFILE << contents;
+    dFILE << results;
+    oFILE << contents;
+    oFILE << results;
     iFILE.close();
-    //oFILE.close();
+    oFILE.close();
     dFILE.close();
 /*
     string input_line, instruction, hex_address;
@@ -320,6 +333,7 @@ void Write(Cache caches[], int level, int total_level, unsigned int address, uns
 
         UpdateRankArray(caches, level, total_level, index, way, search_result, rank_val);
         dFILE << "L" << level << " update " << (caches[level-1].REPLACEMENT_POLICY == 0 ? "LRU" : caches[level-1].REPLACEMENT_POLICY == 1 ? "FIFO" : caches[level-1].REPLACEMENT_POLICY == 2 ? "Optimal" : "") << endl;
+        dFILE << "L" << level << " set " << (dirty_bit_val == DIRTY ? "dirty" : "clean") << endl;
     }
     else{
         //miss
@@ -382,17 +396,11 @@ void Read(Cache caches[], int level, int total_level, unsigned int address, Bloc
 //        if(level > 1){
 //            caches[level - 1].SETS[index].BLOCKS[way].VALID_BIT = INVALID;
 //        }
-        if (level > 1 && caches[level - 1 - 1].INCLUSION_PROPERTY == exclusive)
-                {
+        if(level > 1 && caches[level - 1 - 1].INCLUSION_PROPERTY == exclusive)
+        {
                     caches[level - 1].SETS[index].BLOCKS[way].VALID_BIT = INVALID;
-        #ifdef DBG
-                    fprintf(debug_fp, "Invalidation %llx : Cache L%u Set %llu, Way %u\n\n", ADDR, level + 1, index, way_num);
-        #endif
-                    //return way_num;
-                }
+        }
         block.DIRTY_BIT = CLEAN;
-
-
 
         UpdateRankArray(caches, level, total_level, index, way, search_result, rank_val);
         dFILE << "L1 update " << (caches[level-1].REPLACEMENT_POLICY == 0 ? "LRU" : caches[level-1].REPLACEMENT_POLICY == 1 ? "FIFO" : caches[level-1].REPLACEMENT_POLICY == 2 ? "Optimal" : "") << endl;
@@ -409,10 +417,13 @@ void Read(Cache caches[], int level, int total_level, unsigned int address, Bloc
                 unsigned int victim_address = GetAddress(caches, level, total_level, caches[level-1].SETS[index].BLOCKS[way].TAG, index);
                 dFILE << "L" << level << " victim: " << dec2hex(victim_address) << " (tag " << dec2hex(caches[level-1].SETS[index].BLOCKS[way].TAG) << ", index " << index << ", " << (caches[level-1].SETS[index].BLOCKS[way].DIRTY_BIT == DIRTY ? "dirty" : "clean") << ")" <<endl;
             }
+            else{
+                dFILE << "L" << level << " victim: none" <<endl;
+            }
         }
-        else{
-            dFILE << "L" << level << " victim: none" <<endl;
-        }
+//        else{
+//            dFILE << "L" << level << " victim: none" <<endl;
+//        }
 
         Read(caches, level+1, total_level, address, block, rank_val);
 
@@ -448,9 +459,6 @@ int Evict(Cache caches[], int level, int total_level, unsigned int index){
             //
             if (caches[level-1].INCLUSION_PROPERTY == exclusive)
 			{
-#ifdef DBG
-				fprintf(debug_fp, "Writeback %llx Clean: Cache L%u Set %llu, Way %u\n", ADDR, level + 1, index, way_num);
-#endif
 				Write(caches, level + 1, total_level, address, caches[level-1].SETS[index].RANK_ARRAY[way], CLEAN);
 			}
         }
@@ -532,40 +540,63 @@ void UpdateRankArray(Cache caches[], int level, int total_level, unsigned int in
         caches[level-1].SETS[index].RANK_ARRAY[way] = rank_val;
     }
 }
-void print_contents(Cache caches[], int total_level){
+string get_formatted_cache_contents(Cache caches[], int total_level){
+    stringstream ss;
+    string tag_string;
+    int t;
     for(int i=0; i<total_level; i++){
-        cout << "===== L" << (i+1) << " contents =====" << endl;
+        ss << "===== L" << (i+1) << " contents =====\n";
         for(int j=0; j<caches[i].NUMBER_OF_SETS; j++){
-            cout << "Set     " << j << ":  ";
+            int digits = j > 0 ? (int) log10 ((double) j) + 1 : 1;
+            ss << "Set";
+            t = 5;
+            while(t--) ss << " ";
+            ss << j << ":";
+            t = 8 - digits - 1;
+            while(t--) ss << " ";
             for(int k=0; k<caches[i].ASSOC; k++){
-                //unsigned int iaddress = GetAddress(caches, i+1, total_level, caches[i].SETS[j].BLOCKS[k].TAG, j);
-                cout << setw(10) << dec2hex(caches[i].SETS[j].BLOCKS[k].TAG);
-                //cout << "  " << dec2hex(iaddress);
-                if(caches[i].SETS[j].BLOCKS[k].DIRTY_BIT == DIRTY)
-                    cout << " D";
-                else
-                    cout << "  ";
-
+                tag_string = dec2hex(caches[i].SETS[j].BLOCKS[k].TAG);
+                ss << tag_string;
+                if(caches[i].SETS[j].BLOCKS[k].DIRTY_BIT == DIRTY){
+                    ss << " D";
+                }
+                else{
+                    ss << "  ";
+                }
+                t = 8 - tag_string.size();
+                while(t--) ss << " ";
             }
-            cout << endl;
+            ss << "\n";
         }
     }
+    return ss.str();
 }
-void print_results(Cache caches[], int total_level){
-    cout << "===== Simulation results (raw) =====" << endl;
+string get_formatted_raw_results(Cache caches[], int total_level){
+    stringstream ss;
+    ss << "===== Simulation results (raw) =====\n";
     char list_char = 'a';
     for(int i=0; i<2; i++){
-        cout << (list_char++) << ". number of L" << (i+1) << " reads:        " << caches[i].READS << endl;
-        cout << (list_char++) << ". number of L" << (i+1) << " read misses:  " << caches[i].READ_MISSES << endl;
-        cout << (list_char++) << ". number of L" << (i+1) << " writes:       " << caches[i].WRITES << endl;
-        cout << (list_char++) << ". number of L" << (i+1) << " write misses: " << caches[i].WRITE_MISSES << endl;
+        ss << (list_char++) << ". number of L" << (i+1) << " reads:        " << caches[i].READS << endl;
+        ss << (list_char++) << ". number of L" << (i+1) << " read misses:  " << caches[i].READ_MISSES << endl;
+        ss << (list_char++) << ". number of L" << (i+1) << " writes:       " << caches[i].WRITES << endl;
+        ss << (list_char++) << ". number of L" << (i+1) << " write misses: " << caches[i].WRITE_MISSES << endl;
         if(total_level > i){
-            double miss_rate = (caches[i].READ_MISSES + caches[i].WRITE_MISSES)/(double)(caches[i].READS + caches[i].WRITES); //for L1
-            cout << (list_char++) << ". L" << (i+1) << " miss rate:              " << miss_rate << endl;
+            double miss_rate;
+            if(i == 0){
+                miss_rate = (caches[i].READ_MISSES + caches[i].WRITE_MISSES)/(double)(caches[i].READS + caches[i].WRITES); //for L1
+            }
+            else{
+                miss_rate = caches[i].READ_MISSES/(double)caches[i].READS;
+            }
+            ss << fixed;
+            ss.precision(6);
+            ss << (list_char++) << ". L" << (i+1) << " miss rate:              " << miss_rate << endl;
         }
-        else
-            cout << (list_char++) << ". L" << (i+1) << " miss rate:              " << 0 << endl;
-        cout << (list_char++) << ". number of L" << (i+1) << " writebacks:   " << caches[i].WRITE_BACKS << endl;
+        else{
+            ss << (list_char++) << ". L" << (i+1) << " miss rate:              " << 0 << endl;
+        }
+        ss << (list_char++) << ". number of L" << (i+1) << " writebacks:   " << caches[i].WRITE_BACKS << endl;
     }
-    cout << list_char++ << ". total memory traffic:      " << caches[total_level-1].BLOCK_TRANSFERS << endl;
+    ss << list_char++ << ". total memory traffic:      " << caches[total_level-1].BLOCK_TRANSFERS << endl;
+    return ss.str();
 }
