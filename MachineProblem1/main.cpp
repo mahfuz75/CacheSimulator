@@ -559,6 +559,7 @@ int GetWayToPlaceOrReplace(Cache caches[], int level, int total_level, unsigned 
                 }
             }
         }
+        //test
         if(furthest_addresses.size() == 0 && furthest != -1){
             r = furthest_i;
         }
