@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="16 1024 2 0 0 0 0 gcc_trace.txt" />
+				<Option parameters="16 1024 1 8192 4 0 1 compress_trace.txt" />
 				<Compiler>
 					<Add option="-g" />
 					<Add directory="include" />
