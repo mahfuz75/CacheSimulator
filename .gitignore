@@ -1,6 +1,9 @@
 *.o
 *.exe
 *.depend
+*.cbp
+*.layout
+*.bck
 
 
 **/bin
