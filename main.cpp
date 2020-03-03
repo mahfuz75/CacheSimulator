@@ -189,7 +189,7 @@ int main(int argc, char **argv)
     if (DEBUG)
         dFILE.open(DEBUG_FILE);
 
-    oFILE << "===== Simulator configuration =====" << endl;
+    /*oFILE << "===== Simulator configuration =====" << endl;
     oFILE << "BLOCKSIZE:             " << iBLOCKSIZE << endl;
     oFILE << "L1_SIZE:               " << iL1_SIZE << endl;
     oFILE << "L1_ASSOC:              " << iL1_ASSOC << endl;
@@ -197,7 +197,7 @@ int main(int argc, char **argv)
     oFILE << "L2_ASSOC:              " << iL2_ASSOC << endl;
     oFILE << "REPLACEMENT POLICY:    " << sREPLACEMENT_POLICY << endl;
     oFILE << "INCLUSION PROPERTY:    " << sINCLUSION_PROPERTY<< endl;
-    oFILE << "trace_file:            " << TRACE_FILE << endl;
+    oFILE << "trace_file:            " << TRACE_FILE << endl;*/
 
     cout << "===== Simulator configuration =====" << endl;
     cout << "BLOCKSIZE:             " << iBLOCKSIZE << endl;
@@ -266,6 +266,7 @@ int main(int argc, char **argv)
 
     cout << contents;
     cout << results;
+
     if (DEBUG){
         dFILE << contents;
         dFILE << results;
@@ -297,10 +298,12 @@ unsigned int hex2dec(string hex) {
 
 void Write(Cache caches[], int level, int total_level, unsigned int address, unsigned int rank_val, bool dirty_bit_val) {
     unsigned int cur_trc_cnt = rank_val;
+    /* Check if goes to main memory */
     if (level > total_level) {
         caches[total_level - 1].BLOCK_TRANSFERS++;
         return;
     }
+
     caches[level - 1].ACCESSES++;
     caches[level - 1].WRITES++;
 
@@ -321,7 +324,7 @@ void Write(Cache caches[], int level, int total_level, unsigned int address, uns
             dFILE << "L" << level << " hit" << endl;
 
         search_result = HIT;
-        caches[level-1].SETS[index].BLOCKS[way].DIRTY_BIT = dirty_bit_val;
+        caches[level-1].SETS[index].BLOCKS[way].DIRTY_BIT = dirty_bit_val;  // set dirty
 
         UpdateRankArray(caches, level, total_level, index, way, search_result, rank_val);
         if (DEBUG){
@@ -356,6 +359,7 @@ void Write(Cache caches[], int level, int total_level, unsigned int address, uns
 
 void Read(Cache caches[], int level, int total_level, unsigned int address, Block block, unsigned int rank_val) {
     unsigned int cur_trc_cnt = rank_val;
+    /* Check if goes to main memory */
     if (level > total_level) {
         caches[total_level - 1].BLOCK_TRANSFERS++;
         block.DIRTY_BIT = CLEAN;
@@ -461,6 +465,7 @@ int GetWayToPlaceOrReplace(Cache caches[], int level, int total_level, unsigned 
             return i;
     }
     int r = 0;
+    //For Optimal
     if (caches[level-1].REPLACEMENT_POLICY == Optimal) {
         int furthest = -1, furthest_i = -1;
         vector<int> furthest_addresses = vector<int>();
@@ -495,15 +500,15 @@ int GetWayToPlaceOrReplace(Cache caches[], int level, int total_level, unsigned 
         }
         else {
             r = furthest_addresses[0];
-//            unsigned int min_rank = caches[level-1].SETS[index].RANK_ARRAY[furthest_addresses[0]];
-//            int min_rank_i = furthest_addresses[0];
-//            for (int i=1; i<furthest_addresses.size(); i++) {
-//                if (min_rank < caches[level-1].SETS[index].RANK_ARRAY[furthest_addresses[i]]) {
-//                    min_rank = caches[level-1].SETS[index].RANK_ARRAY[furthest_addresses[i]];
-//                    min_rank_i = furthest_addresses[i];
-//                }
-//            }
-//            r = min_rank_i;
+            /*unsigned int min_rank = caches[level-1].SETS[index].RANK_ARRAY[furthest_addresses[0]];
+            int min_rank_i = furthest_addresses[0];
+            for (int i=1; i<furthest_addresses.size(); i++) {
+                if (min_rank < caches[level-1].SETS[index].RANK_ARRAY[furthest_addresses[i]]) {
+                    min_rank = caches[level-1].SETS[index].RANK_ARRAY[furthest_addresses[i]];
+                    min_rank_i = furthest_addresses[i];
+                }
+            }
+            r = min_rank_i;*/
         }
     }
     else {   //For LRU and FIFO
