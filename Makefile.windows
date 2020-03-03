@@ -18,28 +18,6 @@ _LIBDIR =
 _LIB = 
 _LDFLAGS = 
 
-# INC_DEBUG = $(INC) -Iinclude
-# CFLAGS_DEBUG = $(CFLAGS) -g
-# RESINC_DEBUG = $(RESINC)
-# RCFLAGS_DEBUG = $(RCFLAGS)
-# LIBDIR_DEBUG = $(LIBDIR)
-# LIB_DEBUG = $(LIB)
-# LDFLAGS_DEBUG = $(LDFLAGS)
-# OBJDIR_DEBUG = obj\\Debug
-# DEP_DEBUG = 
-# OUT_DEBUG = bin\\Debug\\sim_cache.exe
-
-# INC_RELEASE = $(INC) -Iinclude
-# CFLAGS_RELEASE = $(CFLAGS) -O2
-# RESINC_RELEASE = $(RESINC)
-# RCFLAGS_RELEASE = $(RCFLAGS)
-# LIBDIR_RELEASE = $(LIBDIR)
-# LIB_RELEASE = $(LIB)
-# LDFLAGS_RELEASE = $(LDFLAGS) -s
-# OBJDIR_RELEASE = obj\\Release
-# DEP_RELEASE = 
-# OUT_RELEASE = bin\\Release\\sim_cache.exe
-
 INC = $(_INC) -Iinclude
 CFLAGS = $(_CFLAGS) -O2
 RESINC = $(_RESINC)
@@ -51,21 +29,12 @@ OBJDIR = obj
 DEP = 
 OUT = sim_cache.exe
 
-
-# OBJ_DEBUG = $(OBJDIR_DEBUG)\\main.o $(OBJDIR_DEBUG)\\src\\Block.o $(OBJDIR_DEBUG)\\src\\Cache.o $(OBJDIR_DEBUG)\\src\\Set.o
-
-# OBJ_RELEASE = $(OBJDIR_RELEASE)\\main.o $(OBJDIR_RELEASE)\\src\\Block.o $(OBJDIR_RELEASE)\\src\\Cache.o $(OBJDIR_RELEASE)\\src\\Set.o
-
 OBJ = $(OBJDIR)\\main.o $(OBJDIR)\\src\\Block.o $(OBJDIR)\\src\\Cache.o $(OBJDIR)\\src\\Set.o
 
-# all: debug release
 all: sim_cache
 	@echo "my work is done here..."
 
-# clean: clean_debug clean_release
-
 before: 
-# 	cmd /c if not exist bin\\Debug md bin\\Debug
 	cmd /c if not exist $(OBJDIR) md $(OBJDIR)
 	cmd /c if not exist $(OBJDIR)\\src md $(OBJDIR)\\src
 
@@ -90,7 +59,6 @@ $(OBJDIR)\\src\\Set.o: src\\Set.cpp
 
 clean: 
 	cmd /c del /f $(OBJ) $(OUT)
-# 	cmd /c rd bin\\Debug
 	cmd /c rd $(OBJDIR)\\src
 	cmd /c rd $(OBJDIR)
 

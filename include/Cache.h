@@ -1,5 +1,4 @@
 #include <stdio.h>
-
 #include <cmath>
 #include <cstdlib>
 #include "Set.h"
@@ -80,7 +79,7 @@ class Cache
         unsigned int GetTagBitWidth() { return MAX_ADDRESS_SIZE - INDEX_BIT_WIDTH - BLOCK_OFFSET_BIT_WIDTH; }
 
         unsigned int GetTagBits(unsigned int address) { return address >> (MAX_ADDRESS_SIZE - TAG_BIT_WIDTH); }
-        unsigned int GetIndexBits(unsigned int address) { return (address << TAG_BIT_WIDTH) >> (TAG_BIT_WIDTH + BLOCK_OFFSET_BIT_WIDTH); }
+        unsigned int GetIndexBits(unsigned int address) { if (INDEX_BIT_WIDTH == 0) return 0; return (address << TAG_BIT_WIDTH) >> (TAG_BIT_WIDTH + BLOCK_OFFSET_BIT_WIDTH); }
 
         //unsigned int GetAddress(unsigned int tag, unsigned int index) { return (tag << (INDEX_BIT_WIDTH + BLOCK_OFFSET_BIT_WIDTH)) | (index << BLOCK_OFFSET_BIT_WIDTH); }
 
@@ -160,7 +159,7 @@ class Cache
         }*/
         void ResetCache(){
             SETS = (Set *)malloc(sizeof(Set) * this->NUMBER_OF_SETS);
-            for(int i=0;i<NUMBER_OF_SETS;i++){
+            for (unsigned int i=0;i<NUMBER_OF_SETS;i++){
                 SETS[i] = Set(ASSOC);
                 //SETS[i].BLOCKS = (Block *)malloc(sizeof(Block) * ASSOC);
             }
